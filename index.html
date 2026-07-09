@@ -1,119 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Minibar POS Launcher</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minibar POS</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
+    body, html { width: 100%; height: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+    .external-fullscreen {
+        position: fixed;
+        top: 0px;
+        right: 0px;
+        background: rgb(0 0 0 / 0%);
+        backdrop-filter: blur(4px);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 10px;
+        cursor: pointer;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .external-fullscreen:hover { background: #007bff; transform: scale(1.05); }
+    /* Temporary overlay to capture first click on iframe area */
+    .click-capture-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #e7f0ff 0%, #f8fbff 100%);
-      color: #1f2a37;
-    }
-
-    .wrap {
-      min-height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .card {
-      width: min(520px, 100%);
-      background: #fff;
-      border: 1px solid #dbe4f0;
-      border-radius: 14px;
-      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
-      padding: 24px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin-bottom: 8px;
-    }
-
-    p {
-      color: #4b5563;
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 16px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 600;
+      background: transparent;
+      z-index: 10000;
       cursor: pointer;
-    }
-
-    .btn-primary {
-      background: #007bff;
-      color: #fff;
-    }
-
-    .btn-primary:hover { background: #0062cc; }
-
-    .btn-ghost {
-      background: #eef4ff;
-      color: #174ea6;
-    }
-
-    .small {
-      margin-top: 12px;
-      font-size: 12px;
-      color: #6b7280;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Opening Minibar POS</h1>
-      <div class="actions">
-        <button id="openNowBtn" class="btn btn-primary">Open now</button>
-        <button id="retryBtn" class="btn btn-ghost">Retry redirect</button>
-      </div>
-      <div class="small" id="statusText">Redirecting...</div>
-    </div>
-  </div>
+  <iframe id="launcherIframe" 
+    src=""
+    referrerpolicy="no-referrer"
+    allowfullscreen
+    allow="fullscreen">
+  </iframe>
+  <button id="externalFullscreenBtn" class="external-fullscreen" title="Full screen">⤢</button>
+  <!-- Temporary overlay for first click -->
+  <div id="firstClickOverlay" class="click-capture-overlay"></div>
 
   <script>
-    (function () {
-      'use strict';
+    const baseUrl = 'https://script.google.com/macros/s/AKfycbx4cTlR_3BdQw-Faa0HaFHHU1H3lHDdaYc6cRLPX-SOL4OBs0TVf8XeWMNCgaztumhXQw/exec';
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    const iframe = document.getElementById('launcherIframe');
+    iframe.src = isMobile ? baseUrl + '?mode=mobile' : baseUrl;
 
-      var baseUrl = 'https://script.google.com/macros/s/AKfycbx4cTlR_3BdQw-Faa0HaFHHU1H3lHDdaYc6cRLPX-SOL4OBs0TVf8XeWMNCgaztumhXQw/exec';
-      var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-      var targetUrl = isMobile ? baseUrl + '?mode=mobile' : baseUrl;
-
-      var openNowBtn = document.getElementById('openNowBtn');
-      var retryBtn = document.getElementById('retryBtn');
-      var statusText = document.getElementById('statusText');
-
-      function openDirect() {
-        statusText.textContent = 'Opening app...';
-        window.location.replace(targetUrl);
+    const btn = document.getElementById('externalFullscreenBtn');
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(console.warn);
+      } else {
+        document.exitFullscreen();
       }
+    }
+    btn.addEventListener('click', toggleFullscreen);
 
-      openNowBtn.addEventListener('click', openDirect);
-      retryBtn.addEventListener('click', openDirect);
+    document.addEventListener('fullscreenchange', () => {
+      btn.textContent = document.fullscreenElement ? '✕' : '⤢';
+      btn.title = document.fullscreenElement ? 'Exit full screen' : 'Full screen';
+    });
 
-      // Auto-start redirect quickly; buttons remain as manual fallback.
-      setTimeout(openDirect, 400);
-    })();
+    // --- First click anywhere (captured by overlay) ---
+    const overlay = document.getElementById('firstClickOverlay');
+    overlay.addEventListener('click', function onFirstClick() {
+      // Remove overlay immediately
+      overlay.removeEventListener('click', onFirstClick);
+      overlay.remove();
+      // Enter full‑screen
+      document.documentElement.requestFullscreen().catch(console.warn);
+    });
+    // Also for touch devices
+    overlay.addEventListener('touchstart', function onFirstTouch() {
+      overlay.removeEventListener('touchstart', onFirstTouch);
+      overlay.remove();
+      document.documentElement.requestFullscreen().catch(console.warn);
+    });
   </script>
 </body>
 </html>
